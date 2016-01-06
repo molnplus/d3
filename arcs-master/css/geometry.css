@@ -1,0 +1,38 @@
+body
+{
+    background: whitesmoke;
+    color: #505050;
+    text-shadow: 2px 1px 3px rgba(200, 200, 200, 0.43);
+}
+
+.demo-container {
+    box-sizing: border-box;
+    width: 850px;
+    height: 700px;
+    padding: 0px 15px 15px;
+    margin: 55px auto 30px auto;
+    border: 1px solid #ddd;
+
+
+    background-image: -webkit-gradient(
+        linear,
+        left top,
+        left bottom,
+        color-stop(0.14, #EAECF1),
+        color-stop(0.99, #E2E9EA)
+    );
+    background-image: -o-linear-gradient(bottom, #EAECF1 14%, #E2E9EA 99%);
+    background-image: -moz-linear-gradient(bottom, #EAECF1 14%, #E2E9EA 99%);
+    background-image: -webkit-linear-gradient(bottom, #EAECF1 14%, #E2E9EA 99%);
+    background-image: -ms-linear-gradient(bottom, #EAECF1 14%, #E2E9EA 99%);
+    background-image: linear-gradient(to bottom, #EAECF1 14%, #E2E9EA 99%);
+
+}
+
+.title {
+    fill: #676767;
+    font-size: 580%;
+    font-family: Arial;
+    text-anchor: end;
+    text-shadow: 0px 1px 1px #4d4d4d;
+}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Arcs</title>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="bower_components/d3/d3.js"></script>
+    <script type="text/javascript" src="bower_components/jquery/jquery.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/geometry.css">
+
+    <script type="text/javascript">
+    $(document).ready(function () {
+
+        /**
+         * Background arc data
+         */
+        var backgroundArcData = {
+            start: 0 * Math.PI / 180,
+            size: 360 * Math.PI / 180
+        };
+
+        /**
+         * The foreground arc data
+         */
+        var foregroundArcData = {
+            start: 180 * Math.PI / 180,
+            size: 0 * Math.PI / 180
+        };
+
+        //Margins
+        var margin = {top: 20, right: 30, bottom: 30, left: 63},
+                width = 800 - margin.left - margin.right,
+                height = 550 - margin.top - margin.bottom;
+
+        var x = d3.scale.ordinal()
+                .rangePoints([0, width], 1);
+
+        var y = d3.scale.ordinal()
+                .rangePoints([0, height], .8);
+
+        d3.select(".chart")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var arc = d3.svg.arc()
+                .innerRadius(135)
+                .outerRadius(200)
+                .startAngle(function (arc, i) {
+                    return arc.start;
+                })
+                .endAngle(function (arc, i) {
+                    return arc.start + arc.size;
+                });
+
+        var chart = d3.select(".chart").append("svg")
+                .attr("class", "chart")
+                .attr("width", 820)
+                .attr("height", 820).append("g")
+                .attr("transform", "translate(330,230)");
+
+        var arcs = chart.append("g");
+
+        var backgroundArcPath = d3.svg.arc()
+                .innerRadius(135)
+                .outerRadius(200)
+                .startAngle(backgroundArcData.start)
+                .endAngle(backgroundArcData.start + backgroundArcData.size);
+
+        var foregroundArcPath = d3.svg.arc()
+                .innerRadius(135)
+                .outerRadius(200)
+                .startAngle(Math.PI)
+                .endAngle(Math.PI);
+
+        var lightTouchArcPathLeft = d3.svg.arc()
+                .innerRadius(133)
+                .outerRadius(135)
+                .startAngle(210 * Math.PI / 180)
+                .endAngle(260 * Math.PI / 180);
+
+        var lightTouchArcPathRight = d3.svg.arc()
+                .innerRadius(133)
+                .outerRadius(135)
+                .startAngle(140 * Math.PI / 180)
+                .endAngle(210 * Math.PI / 180);
+
+        var backgroundArc = arcs.append("path")
+                .style("fill", "url(#overall)")
+                .attr("filter", "url(#overallShadow)")
+                .attr("d", backgroundArcPath);
+
+        var foregroundArc = arcs.append("path")
+                .style("fill", "url(#green)")
+                .attr("filter", "url(#overallShadow)")
+                .style("stroke", "black")
+                .style("stroke-width", "1")
+                .style("stroke-opacity", ".05")
+                .style("stroke-linecap", "round")
+                .style("stroke-linejoin", "round")
+                .attr("d", foregroundArcPath);
+
+        var lightTouchArcLeft = arcs.append("path")
+                .style("fill", "url(#whitelightLeft)")
+                .attr("d", lightTouchArcPathLeft);
+
+        var lightTouchArcRight = arcs.append("path")
+                .style("fill", "url(#whitelightRight)")
+                .attr("d", lightTouchArcPathRight);
+
+
+        //Set the initial gradient
+        foregroundArc.transition().style("fill", "url(#green)");
+
+        //Select the initial gradient
+        var greenGradient = d3.select("#green");
+
+        var textContent = 0;
+        var text = chart.append("text")
+                .attr("x", 110)
+                .attr("y", 30)
+                .text(textContent + "%")
+                .attr("class", "title");
+
+        var secondColor = greenGradient.selectAll("stop").filter(function(d, i) {
+            if(i === 1) {
+                return i === 1;
+            } else {
+                return null;
+            }
+        });
+
+        //Updates the interval
+        var firstRun = false;
+        setInterval(function () {
+            if(!firstRun) {
+                //Do 100% on the first run to show off
+                firstRun = true;
+                updatePercent(99);
+            } else {
+                updatePercent(getRandomInt(1, 100));
+            }
+        }, 3000);
+
+        /**
+         * Updates the percent of the arc within the circle
+         * @param percent The percent that this updates with
+         */
+        function updatePercent(percent) {
+            var radians = (3.6 * percent) * Math.PI / 180;
+
+            //Transition and change text
+            text.transition().tween("text", function () {
+                var currentpercent;
+                if(this.textContent.length > 0) {
+                    currentpercent = this.textContent.substring(0,this.textContent.length - 1);
+                } else {
+                    currentpercent = 0;
+                }
+                var percentFunction = d3.interpolateRound(parseInt(currentpercent), percent);
+                return function(t) {
+                    this.textContent = percentFunction(t) + "%";
+                };
+            }).duration(2000);
+
+            secondColor.transition().style("stop-color", function(i) {
+                if(percent < 33) {
+                    return "rgb(185,230,176)";
+                } else if (percent > 32 && percent < 66) {
+                    return "rgb(226,231,200)";
+                } else {
+                    return "rgb(241,180,192)";
+                }
+            }).duration(2000);
+
+            var transition = foregroundArc.transition().attrTween("d", function(d) {
+                var interpolate = d3.interpolate(foregroundArcData.size, radians);
+                return function(t) {
+                    return arc({
+                        start: foregroundArcData.start,
+                        size: interpolate(t)
+                    });
+                };
+            }).duration(2000);
+
+            transition.each("end", function() {
+                foregroundArcData.size = radians;
+            });
+        }
+
+        /**
+         * Returns a random integer between min and max
+         * Using Math.round() will give you a non-uniform distribution!
+         */
+        function getRandomInt (min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+    });
+    </script>
+</head>
+<body>
+    <div class="demo-container">
+        <div>
+            <h1>
+                Arcs
+            </h1>
+            <p>
+                This shows custom arc features from <a href="http://d3js.org/">d3js</a> as an attractive
+                donut percent chart.  This demonstrates basic arcs, multiple SVG layers, filters for shadows,
+                and transitioning of colors.
+            </p>
+        </div>
+        <svg class="chart" width="100" height="500">
+
+            <defs>
+                <!-- Overall-->
+                <linearGradient id="overall" x1="10%" y1="70%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgb(219,229,231);stop-opacity:1"></stop>
+                    <stop offset="100%" style="stop-color:rgb(192,205,205);stop-opacity:1"></stop>
+                </linearGradient>
+
+                <!-- Drop shadow -->
+                <filter id="overallShadow" x="-1" y="-1" width="250%" height="250%">
+                    <feOffset result="offOut" in="SourceGraphic" dx="-3" dy="3"></feOffset>
+                    <feColorMatrix result="matrixOut" in="offOut" type="matrix"
+                                   values="0.7 0 0 0 0 0 0.7 0 0 0 0 0 0.7 0 0 0 0 0 1 0"></feColorMatrix>
+                    <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="2"></feGaussianBlur>
+                    <feBlend in="SourceGraphic" in2="blurOut" mode="normal"></feBlend>
+                </filter>
+
+                <!-- Foreground Arc -->
+                <linearGradient id="green" x1="0%" y1="20%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgb(236,244,235);stop-opacity:1"></stop>
+                    <stop offset="100%" style="stop-color:rgb(215,226,213);stop-opacity:1"></stop>
+                </linearGradient>
+
+                <!-- Light touch left -->
+                <linearGradient id="whitelightLeft" x1="100%" y1="100%" x2="0%" y2="100%">
+                    <stop offset="30%" style="stop-color:rgb(234,245,245);stop-opacity:1"></stop>
+                    <stop offset="100%" style="stop-color:rgb(219,229,231);stop-opacity:0"></stop>
+                </linearGradient>
+
+                <!-- Light touch right -->
+                <linearGradient id="whitelightRight" x1="0%" y1="100%" x2="100%" y2="100%">
+                    <stop offset="30%" style="stop-color:rgb(234,245,245);stop-opacity:1"></stop>
+                    <stop offset="100%" style="stop-color:rgb(219,229,231);stop-opacity:0"></stop>
+                </linearGradient>
+            </defs>
+
+        </svg>
+    </div>
+
+</body>
+</html>
