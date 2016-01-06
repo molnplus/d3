@@ -1,0 +1,7 @@
+{
+  "generator-react-webpack": {
+    "appName": "reactd3reflux",
+    "style": "css",
+    "postcss": false
+  }
+}
